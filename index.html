@@ -3,41 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Jammies Stories - Cozy bedtime stories for kids with interactive narrations, calming themes, and relaxing soundscapes.">
+  <meta name="description" content="Jammies Stories - Bedtime Book Tracker for kids. Log books, track reading milestones, and see reading age stats.">
   <meta name="theme-color" content="#0b0d1b">
-  <title>Jammies Stories - Cozy Bedtime Tales & Lullabies</title>
+  <title>Jammies Stories - Bedtime Reading Tracker</title>
   <!-- Google Fonts: Quicksand for headings, Nunito for reading text -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300..700;1,300..700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
-  <!-- FontAwesome for cute icons (loaded from CDN) -->
+  <!-- FontAwesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-  <!-- Starry Canvas Background -->
+  <!-- Starry Background Canvas -->
   <canvas id="starfield-canvas"></canvas>
 
   <div class="app-container">
     <!-- Header -->
     <header class="main-header">
       <div class="header-logo-container">
-        <img src="assets/jammies_logo.jpg" alt="Jammies Stories Moon Logo" id="app-logo" class="app-logo">
+        <img src="assets/jammies_logo.jpg" alt="Jammies Stories Logo" id="app-logo" class="app-logo">
         <div class="logo-text">
-          <h1 id="app-title">Jammies Stories</h1>
-          <p class="tagline">Cozy Tales & Dreams</p>
+          <h1 id="app-title">Jammies Book Tracker</h1>
+          <p class="tagline">Tracking Reading Milestones</p>
         </div>
       </div>
       
       <div class="header-controls">
-        <!-- Star Counter / Gamification -->
-        <div class="star-badge" id="star-badge" title="Stars collected tonight!">
-          <i class="fa-solid fa-star star-icon"></i>
-          <span id="star-count">0</span>
-        </div>
-
-        <!-- Ambient Sound Control Panel -->
+        <!-- Calming Ambient Synth -->
         <div class="ambient-sound-control">
           <button id="btn-ambient-toggle" class="control-btn sound-toggle-btn" title="Toggle Calming Sounds">
             <i class="fa-solid fa-music"></i>
@@ -55,94 +49,261 @@
       </div>
     </header>
 
-    <!-- Main Content Area -->
     <main class="main-content">
-      <!-- Welcome Section (Hero) -->
-      <section id="hero-section" class="hero-section">
-        <h2>Time for Bed, Little Explorer</h2>
-        <p>Choose a story, put on your favorite jammies, and let's go on a cozy adventure together.</p>
-      </section>
-
-      <!-- Story Catalog Grid -->
-      <section id="catalog-section" class="catalog-section">
-        <div class="section-header">
-          <h3><i class="fa-solid fa-book-open"></i> Story Selection</h3>
+      <!-- Dashboard & Profile Panel -->
+      <section id="dashboard-section" class="dashboard-section glass-card">
+        <div class="profile-header">
+          <div class="profile-avatar">
+            <i class="fa-solid fa-user-astronaut avatar-icon"></i>
+          </div>
+          <div class="profile-info">
+            <h2 id="display-name">Little Explorer</h2>
+            <p class="birthday-badge">
+              <i class="fa-solid fa-cake-candles"></i> Born July 20, 2019 &bull; 
+              <span id="display-age" class="age-highlight">Loading age...</span>
+            </p>
+          </div>
+          <div class="profile-actions">
+            <button id="btn-edit-profile" class="dashboard-action-btn secondary-action" title="Edit Name & Birthday">
+              <i class="fa-solid fa-user-pen"></i> Settings
+            </button>
+            <button id="btn-export-log" class="dashboard-action-btn secondary-action" title="Download backup of reading history">
+              <i class="fa-solid fa-download"></i> Backup Log
+            </button>
+            <button id="btn-import-trigger" class="dashboard-action-btn secondary-action" title="Restore log from file">
+              <i class="fa-solid fa-upload"></i> Restore
+            </button>
+            <input type="file" id="file-import" class="hidden" accept=".json">
+          </div>
         </div>
-        <div id="stories-grid" class="stories-grid">
-          <!-- Stories will be rendered here dynamically via JS -->
-        </div>
-      </section>
 
-      <!-- Reader Section (Hidden by default) -->
-      <section id="reader-section" class="reader-section hidden">
-        <div class="reader-header">
-          <button id="btn-back-to-catalog" class="back-btn">
-            <i class="fa-solid fa-arrow-left"></i> Close Story
-          </button>
+        <!-- Reading Stats -->
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper gold"><i class="fa-solid fa-book"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-books-read">0</span>
+              <label>Completed Books</label>
+            </div>
+          </div>
           
-          <div class="reader-settings">
-            <!-- Text Resize -->
-            <button id="btn-decrease-text" class="setting-btn" title="Make text smaller">A-</button>
-            <button id="btn-increase-text" class="setting-btn" title="Make text larger">A+</button>
-            
-            <!-- TTS Toggle & Controls -->
-            <div class="narration-controls">
-              <button id="btn-tts-toggle" class="tts-btn" title="Read to me">
-                <i class="fa-solid fa-volume-high"></i> Narration
-              </button>
-              <div class="tts-settings-dropdown hidden" id="tts-settings-dropdown">
-                <label for="tts-voice-select">Voice:</label>
-                <select id="tts-voice-select"></select>
-                
-                <label for="tts-speed">Speed:</label>
-                <input type="range" id="tts-speed" min="0.5" max="1.5" step="0.1" value="0.9">
-              </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper purple"><i class="fa-solid fa-book-open-reader"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-books-current">0</span>
+              <label>Currently Reading</label>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal"><i class="fa-solid fa-file-invoice"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-pages-read">0</span>
+              <label>Total Pages Logged</label>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral"><i class="fa-solid fa-star"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-stars-rating">0.0</span>
+              <label>Avg Rating</label>
             </div>
           </div>
         </div>
+      </section>
 
-        <div class="reader-card">
-          <!-- Story Illustration -->
-          <div class="reader-illustration-container">
-            <img id="story-illustration" src="" alt="Story Illustration">
+      <!-- Currently Reading Section -->
+      <section id="current-reading-section" class="catalog-section">
+        <div class="section-header">
+          <h3><i class="fa-solid fa-book-open-reader text-purple"></i> Currently Reading</h3>
+          <button id="btn-add-book" class="add-book-btn">
+            <i class="fa-solid fa-circle-plus"></i> Add New Book
+          </button>
+        </div>
+        <div id="current-books-grid" class="books-grid">
+          <!-- Currently reading books rendered here -->
+        </div>
+      </section>
+
+      <!-- Completed Reading Log (History) -->
+      <section id="history-section" class="catalog-section">
+        <div class="section-header">
+          <h3><i class="fa-solid fa-clock-rotate-left text-teal"></i> Reading History (Log starting today)</h3>
+        </div>
+        <div class="history-table-card glass-card">
+          <div class="history-list-header">
+            <span>Book Cover & Title</span>
+            <span>Pages</span>
+            <span>Date Finished</span>
+            <span>Age at Completion</span>
+            <span>Rating & Review</span>
+            <span>Actions</span>
           </div>
-
-          <!-- Story Text Content -->
-          <div class="story-content">
-            <h2 id="story-title">Story Title</h2>
-            <div id="story-page-content" class="story-page-content">
-              <!-- Current page text goes here -->
-            </div>
-          </div>
-
-          <!-- Reader Navigation -->
-          <div class="reader-navigation">
-            <button id="btn-prev-page" class="nav-btn"><i class="fa-solid fa-chevron-left"></i> Previous</button>
-            <div class="page-indicator">
-              Page <span id="current-page-num">1</span> of <span id="total-pages-num">5</span>
-            </div>
-            <button id="btn-next-page" class="nav-btn highlight-btn">Next <i class="fa-solid fa-chevron-right"></i></button>
+          <div id="history-list-body" class="history-list-body">
+            <!-- Completed books will be listed here -->
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Star Collection Modal -->
-    <div id="star-modal" class="modal hidden">
-      <div class="modal-content glass-card">
-        <div class="star-animation-container">
-          <i class="fa-solid fa-star big-star"></i>
-          <div class="burst-particles"></div>
+    <!-- Modal: Add New Book -->
+    <div id="add-book-modal" class="modal hidden">
+      <div class="modal-content glass-card form-modal">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-book"></i> Log a New Book</h3>
+          <button class="close-modal-btn" data-modal="add-book-modal">&times;</button>
         </div>
-        <h3>Sweet Dreams!</h3>
-        <p>You completed the story and collected a sleeping star. Keep up the great bedtime routine!</p>
-        <button id="btn-close-modal" class="modal-btn">Collect Star & Return</button>
+        <form id="add-book-form" class="modal-form">
+          <div class="form-group">
+            <label for="book-title">Book Title*</label>
+            <input type="text" id="book-title" required placeholder="e.g. Team Unicorn">
+          </div>
+          <div class="form-group">
+            <label for="book-author">Author</label>
+            <input type="text" id="book-author" placeholder="e.g. A. Wakewood">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="book-pages">Total Pages*</label>
+              <input type="number" id="book-pages" min="1" required placeholder="e.g. 40">
+            </div>
+            <div class="form-group">
+              <label for="book-preset-cover">Cover Illustration</label>
+              <select id="book-preset-cover">
+                <option value="unicorn">Unicorn Meadow (Current)</option>
+                <option value="woolly">Snowy Mammoth (Current)</option>
+                <option value="star">Sleepy Star (Cozy)</option>
+                <option value="owl">Whispering Owl (Cozy)</option>
+                <option value="boat">Paper Boat (Cozy)</option>
+                <option value="custom">Custom URL...</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group hidden" id="custom-cover-group">
+            <label for="book-custom-cover">Custom Cover Image URL</label>
+            <input type="url" id="book-custom-cover" placeholder="https://example.com/cover.jpg">
+          </div>
+          <div class="form-group">
+            <label for="book-status">Reading Status</label>
+            <select id="book-status">
+              <option value="reading">Currently Reading</option>
+              <option value="finished">Finished Already</option>
+            </select>
+          </div>
+          <div id="form-finished-fields" class="hidden">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="book-finish-date">Date Finished</label>
+                <input type="date" id="book-finish-date">
+              </div>
+              <div class="form-group">
+                <label>Rating</label>
+                <div class="star-rating-input">
+                  <input type="radio" name="form-rating" id="star-5" value="5"><label for="star-5" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-4" value="4"><label for="star-4" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-3" value="3" checked><label for="star-3" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-2" value="2"><label for="star-2" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-1" value="1"><label for="star-1" class="fa-solid fa-star"></label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="book-review">Review / Child's Review Note</label>
+              <input type="text" id="book-review" placeholder="e.g. 'He loved the parts with the castle!'">
+            </div>
+          </div>
+          <button type="submit" class="submit-btn">Save Book</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Update Reading Progress -->
+    <div id="progress-modal" class="modal hidden">
+      <div class="modal-content glass-card form-modal small-modal">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-bars-progress"></i> Update Reading Page</h3>
+          <button class="close-modal-btn" data-modal="progress-modal">&times;</button>
+        </div>
+        <form id="progress-form" class="modal-form">
+          <input type="hidden" id="progress-book-id">
+          <h4 id="progress-book-title" class="progress-title">Book Title</h4>
+          <div class="progress-slider-container">
+            <label for="progress-page-input">Current Page:</label>
+            <div class="progress-input-group">
+              <input type="number" id="progress-page-input" min="0" required>
+              <span>/ <strong id="progress-max-pages">100</strong></span>
+            </div>
+            <input type="range" id="progress-page-slider" min="0" value="0">
+          </div>
+          <button type="submit" class="submit-btn">Update Progress</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Book Finished Rating -->
+    <div id="finish-modal" class="modal hidden">
+      <div class="modal-content glass-card form-modal">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-trophy text-gold"></i> Book Finished!</h3>
+          <button class="close-modal-btn" data-modal="finish-modal">&times;</button>
+        </div>
+        <form id="finish-form" class="modal-form">
+          <input type="hidden" id="finish-book-id">
+          <h4 id="finish-book-title" class="finish-title">Title</h4>
+          <p class="finish-congrats">Hooray! Congratulations on completing this book. Let's log his review.</p>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="finish-date">Date Completed</label>
+              <input type="date" id="finish-date" required>
+            </div>
+            <div class="form-group">
+              <label>Child's Rating</label>
+              <div class="star-rating-input">
+                <input type="radio" name="finish-rating" id="f-star-5" value="5"><label for="f-star-5" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-4" value="4"><label for="f-star-4" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-3" value="3" checked><label for="f-star-3" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-2" value="2"><label for="f-star-2" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-1" value="1"><label for="f-star-1" class="fa-solid fa-star"></label>
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="finish-review">Child's Note / Review Quote</label>
+            <input type="text" id="finish-review" placeholder="e.g. 'The unicorns saved the forest, he loved the unicorn with sparkly horn!'">
+          </div>
+          
+          <button type="submit" class="submit-btn success-btn">Log to History</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Settings/Profile -->
+    <div id="profile-modal" class="modal hidden">
+      <div class="modal-content glass-card form-modal small-modal">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-user-gear"></i> Settings</h3>
+          <button class="close-modal-btn" data-modal="profile-modal">&times;</button>
+        </div>
+        <form id="profile-form" class="modal-form">
+          <div class="form-group">
+            <label for="profile-name">Son's Name</label>
+            <input type="text" id="profile-name" required placeholder="e.g. James">
+          </div>
+          <div class="form-group">
+            <label for="profile-birthday">Birthday* (for Age calculation)</label>
+            <input type="date" id="profile-birthday" required>
+          </div>
+          <button type="submit" class="submit-btn">Save Settings</button>
+        </form>
       </div>
     </div>
 
     <!-- Footer -->
     <footer class="main-footer">
-      <p>&copy; 2026 Jammies Stories. Lovingly crafted for sweet dreams.</p>
+      <p>&copy; 2026 Jammies Book Tracker. Lovingly tracking childhood reading, page by page.</p>
     </footer>
   </div>
 

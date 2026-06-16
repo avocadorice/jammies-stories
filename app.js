@@ -1,70 +1,542 @@
-// Jammies Stories - Interactive Bedtime Story Reader App Logic
+// Jammies Book Tracker - Child Reading Log & Progress Application
 
-// Curated Bedtime Stories Dataset
-const stories = [
+// Default Initial Data
+const defaultBooks = [
   {
-    id: "sleepy-star",
-    title: "The Sleepy Star's Journey",
-    subtitle: "Resting is the key to shining bright",
-    description: "Follow Pip, a tiny star who forgot how to shine, on a cozy journey across the night sky to find his glow.",
-    duration: "4 mins",
-    difficulty: "Easy",
-    cover: "assets/sleepy_star.jpg",
-    pages: [
-      "Once upon a midnight sky, there lived a tiny star named Pip. Pip was smaller than the other stars, but he loved to sparkle. Every evening, he would bounce from cloud to cloud, giggling and blinking his silver light. But tonight, Pip felt different. He was tired, and his glow was fading into a faint, warm amber.",
-      "Pip tried to squeeze his eyes shut and puff out his chest. 'Sparkle! Sparkle!' he whispered, but only a tiny flicker came out. Fearing he would be forgotten, Pip decided to visit the wise Moon. The Moon sat on a soft velvet cushion of dark blue, looking down at the earth below with a calm, silver gaze.",
-      "'Dear Moon,' Pip whispered, 'I have lost my sparkle. Can you help me find it?' The Moon smiled, a warm and golden curve. 'Ah, little Pip. You have not lost your sparkle. You have simply run out of night-breath. You must learn the art of resting. To shine bright, one must also sleep.'",
-      "The Moon gently blew a cloud-blanket over Pip. 'Close your eyes, little star,' the Moon whispered. 'Breathe in the quiet space, and breathe out the busy day.' Pip tucked his points in, pulled the soft, cool mist over his shoulders, and listened to the quiet, rhythmic hum of the night sky.",
-      "As Pip drifted into a deep, peaceful sleep, a beautiful thing happened. With every slow, calm breath he took, his light began to pulse. First, a soft blue, then a warm lavender, and finally, a brilliant, shining silver. Pip was resting, and in his rest, his glow was fully restored, ready for a brand new night."
-    ]
+    id: "default-unicorn",
+    title: "Team Unicorn",
+    author: "A. Wakewood",
+    totalPages: 40,
+    currentPage: 15,
+    cover: "assets/team_unicorn.jpg",
+    status: "reading",
+    startDate: "2026-06-15",
+    finishDate: null,
+    rating: null,
+    review: null
   },
   {
-    id: "luna-owl",
-    title: "Luna and the Whispering Forest",
-    subtitle: "Listening to the quiet sounds of the night",
-    description: "Luna the owl wants to find her way home by listening to the gentle forest breeze and the music of the trees.",
-    duration: "5 mins",
-    difficulty: "Medium",
-    cover: "assets/luna_owl.jpg",
-    pages: [
-      "In the heart of the Whispering Forest, a young owl named Luna sat on a mossy oak branch. While other owls loved to hoot loudly, Luna preferred to listen. Tonight, the forest was alive with soft, magical sounds. Leaves rustled like silk, and distant streams played a gentle, flowing lullaby.",
-      "Luna wanted to fly to the Great Pine, where her family was gathered. But the forest was misty, and the trails looked different in the fog. 'Listen to the forest,' her mother had always said. 'The wind knows the way.' Luna closed her eyes and tilted her head, letting the sounds guide her.",
-      "First, she heard a soft *whoosh* to her left. That was the wind rushing through the Willow Valley. Next, she heard a gentle *plip-plop* straight ahead. That was the dew dripping off the fern leaves near the stream. By mapping the sounds, Luna felt the forest mapping itself in her mind.",
-      "She spread her wings and flew, light as a feather. She did not fly fast; she drifted, letting the warm air carry her. She followed the scent of pine and the soft, rhythmic rustle of the ancient trees. With every beat of her wings, the mist seemed to part, guided by the music of the night.",
-      "Soon, she saw the warm, welcoming glow of the Great Pine. Her family was there, waiting with cozy nests and soft smiles. Luna landed gently on the branch. She had found her way home not by seeing, but by listening. The Whispering Forest was now quiet, and Luna fell asleep, safe in her mother's wings."
-    ]
-  },
-  {
-    id: "paper-boat",
-    title: "Barnaby's Sleepy Stream",
-    subtitle: "A peaceful drift down a quiet river",
-    description: "Follow Barnaby, the tiny paper boat, as he sails through glowing lily pads and cozy fireflies under the crescent moon.",
-    duration: "4 mins",
-    difficulty: "Easy",
-    cover: "assets/paper_boat.jpg",
-    pages: [
-      "Barnaby was a tiny paper boat folded from a sheet of clean white paper. He lived at the edge of a sleepy, slow-moving stream. Tonight, the water was as smooth as dark glass, reflecting the stars above like a long, winding mirror. It was time for Barnaby's nightly cruise.",
-      "He pushed off from the muddy bank and drifted into the gentle current. He didn't have a sail or an engine; he simply went where the river took him. A friendly green frog sitting on a lily pad waved a webbed hand. 'Slow down, Barnaby,' the frog croaked softly. 'The river is sleepiest tonight.'",
-      "As Barnaby drifted further, the air filled with little golden lights. Fireflies! They danced in circles around Barnaby's mast, lighting up the dark water. The stream whispered a soft *swish-swoosh* as it brushed against the smooth river stones. Barnaby felt warm and safe, rock-rocking on the water.",
-      "He passed under a canopy of weeping willows. Their long, leafy branches dipped into the water, creating gentle ripples that pushed Barnaby in soft circles. A family of ducks floated nearby, their heads tucked beneath their wings, fast asleep on the water's surface.",
-      "Finally, the stream pooled into a wide, quiet pond covered in sleeping water lilies. Barnaby came to a gentle stop against a soft, velvet-green moss bank. The water held him cradled, rocking him to sleep. Under the watchful crescent moon, the little paper boat closed his eyes and drifted into sweet dreams."
-    ]
+    id: "default-woolly",
+    title: "Woolly",
+    author: "Eliza Finch",
+    totalPages: 64,
+    currentPage: 28,
+    cover: "assets/woolly.jpg",
+    status: "reading",
+    startDate: "2026-06-15",
+    finishDate: null,
+    rating: null,
+    review: null
   }
 ];
 
-// App State
-let activeStoryIndex = null;
-let currentPageIndex = 0;
-let starCount = parseInt(localStorage.getItem('jammies_stars') || '0');
-let textSizeClass = 'text-medium';
+// App State Variables
+let sonName = "";
+let sonBirthday = "";
+let booksList = [];
 
-// Web Speech API / TTS Variables
-let synth = window.speechSynthesis;
-let voices = [];
-let ttsActive = false;
-let currentUtterance = null;
+// Load State from LocalStorage
+function loadState() {
+  sonName = localStorage.getItem('jammies_name') || "Explorer";
+  sonBirthday = localStorage.getItem('jammies_bday') || "2019-07-20";
+  
+  const savedBooks = localStorage.getItem('jammies_books');
+  if (savedBooks) {
+    booksList = JSON.parse(savedBooks);
+  } else {
+    booksList = [...defaultBooks];
+    saveBooks();
+  }
+}
 
-// Bedtime Audio Synthesizer (Web Audio API)
+function saveBooks() {
+  localStorage.setItem('jammies_books', JSON.stringify(booksList));
+}
+
+// Dynamic Age Calculators
+function calculateAgeString(birthdayDateStr, targetDateStr = null) {
+  const birthDate = new Date(birthdayDateStr);
+  const targetDate = targetDateStr ? new Date(targetDateStr) : new Date();
+  
+  let years = targetDate.getFullYear() - birthDate.getFullYear();
+  let months = targetDate.getMonth() - birthDate.getMonth();
+  let days = targetDate.getDate() - birthDate.getDate();
+  
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+  
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  if (years < 0) return "Not born yet!";
+  
+  let parts = [];
+  if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+  if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+  if (years === 0 && months === 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+  
+  return parts.join(", ");
+}
+
+function calculateAgeShort(birthdayDateStr, targetDateStr) {
+  const birthDate = new Date(birthdayDateStr);
+  const targetDate = new Date(targetDateStr);
+  
+  let years = targetDate.getFullYear() - birthDate.getFullYear();
+  let months = targetDate.getMonth() - birthDate.getMonth();
+  let days = targetDate.getDate() - birthDate.getDate();
+  
+  if (days < 0) {
+    months--;
+  }
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+  
+  if (years < 0) return "0y";
+  return `${years}y ${months}m`;
+}
+
+// Cover Presets helper
+function getCoverUrl(preset, customUrl) {
+  const presets = {
+    unicorn: "assets/team_unicorn.jpg",
+    woolly: "assets/woolly.jpg",
+    star: "assets/sleepy_star.jpg",
+    owl: "assets/luna_owl.jpg",
+    boat: "assets/paper_boat.jpg"
+  };
+  return preset === "custom" ? (customUrl || "assets/sleepy_star.jpg") : (presets[preset] || presets.star);
+}
+
+// Renders the views
+function renderDashboard() {
+  document.getElementById('display-name').textContent = `${sonName}'s Log`;
+  document.getElementById('display-age').textContent = calculateAgeString(sonBirthday);
+  
+  // Calculate Stats
+  const completed = booksList.filter(b => b.status === 'finished');
+  const reading = booksList.filter(b => b.status === 'reading');
+  
+  const totalCompleted = completed.length;
+  const totalReading = reading.length;
+  
+  let totalPages = 0;
+  booksList.forEach(b => {
+    if (b.status === 'finished') {
+      totalPages += b.totalPages;
+    } else {
+      totalPages += b.currentPage;
+    }
+  });
+
+  let avgRating = 0.0;
+  if (totalCompleted > 0) {
+    const sum = completed.reduce((acc, b) => acc + (b.rating || 0), 0);
+    avgRating = (sum / totalCompleted).toFixed(1);
+  }
+
+  // Update UI Elements
+  document.getElementById('stat-books-read').textContent = totalCompleted;
+  document.getElementById('stat-books-current').textContent = totalReading;
+  document.getElementById('stat-pages-read').textContent = totalPages;
+  document.getElementById('stat-stars-rating').textContent = avgRating;
+}
+
+function renderCurrentlyReading() {
+  const grid = document.getElementById('current-books-grid');
+  grid.innerHTML = '';
+  
+  const readingBooks = booksList.filter(b => b.status === 'reading');
+  
+  if (readingBooks.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-history" style="grid-column: 1 / -1; width: 100%;">
+        <i class="fa-solid fa-book-open"></i>
+        <p>No books currently reading. Click "Add New Book" to start tracking one!</p>
+      </div>
+    `;
+    return;
+  }
+
+  readingBooks.forEach(book => {
+    const progressPct = Math.round((book.currentPage / book.totalPages) * 100);
+    
+    const card = document.createElement('div');
+    card.className = 'book-card';
+    card.innerHTML = `
+      <img src="${book.cover}" alt="${book.title}" class="book-card-cover">
+      <div class="book-card-details">
+        <h4>${book.title}</h4>
+        <span class="book-author">by ${book.author || 'Unknown Author'}</span>
+        
+        <div class="book-progress-wrapper">
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${progressPct}%"></div>
+          </div>
+          <div class="progress-label">
+            <span>Page ${book.currentPage} of ${book.totalPages}</span>
+            <span>${progressPct}%</span>
+          </div>
+        </div>
+        
+        <div class="book-card-actions">
+          <button class="card-action-btn btn-progress-update" data-id="${book.id}">
+            <i class="fa-solid fa-pen"></i> Progress
+          </button>
+          <button class="card-action-btn btn-mark-finish" data-id="${book.id}">
+            <i class="fa-solid fa-check"></i> Finish
+          </button>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+
+  // Attach Card Event Listeners
+  grid.querySelectorAll('.btn-progress-update').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      openProgressModal(e.currentTarget.getAttribute('data-id'));
+    });
+  });
+
+  grid.querySelectorAll('.btn-mark-finish').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      openFinishModal(e.currentTarget.getAttribute('data-id'));
+    });
+  });
+}
+
+function renderHistory() {
+  const body = document.getElementById('history-list-body');
+  body.innerHTML = '';
+  
+  const completedBooks = booksList
+    .filter(b => b.status === 'finished')
+    .sort((a, b) => new Date(b.finishDate) - new Date(a.finishDate)); // Newest finished first
+    
+  if (completedBooks.length === 0) {
+    body.innerHTML = `
+      <div class="empty-history">
+        <i class="fa-solid fa-folder-open"></i>
+        <p>No completed books logged yet. His history starts today!</p>
+      </div>
+    `;
+    return;
+  }
+
+  completedBooks.forEach(book => {
+    const ageAtCompletion = calculateAgeShort(sonBirthday, book.finishDate);
+    
+    // Draw star icons
+    let starsHtml = "";
+    for (let i = 1; i <= 5; i++) {
+      if (i <= (book.rating || 0)) {
+        starsHtml += `<i class="fa-solid fa-star"></i>`;
+      } else {
+        starsHtml += `<i class="fa-regular fa-star"></i>`;
+      }
+    }
+
+    const row = document.createElement('div');
+    row.className = 'history-row';
+    row.innerHTML = `
+      <div class="history-book-info">
+        <img src="${book.cover}" alt="${book.title}" class="history-book-cover">
+        <div class="history-book-title-meta">
+          <strong>${book.title}</strong>
+          <span>by ${book.author || 'Unknown'}</span>
+        </div>
+      </div>
+      <span>${book.totalPages} pages</span>
+      <span>${formatDateString(book.finishDate)}</span>
+      <span class="history-age">${ageAtCompletion}</span>
+      <div class="history-rating">
+        <span class="stars-display">${starsHtml}</span>
+        <span class="review-quote" title="${book.review || ''}">${book.review ? `"${book.review}"` : 'No review note'}</span>
+      </div>
+      <button class="btn-delete-log" data-id="${book.id}" title="Delete this entry">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    `;
+    body.appendChild(row);
+  });
+
+  // Attach delete buttons
+  body.querySelectorAll('.btn-delete-log').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.currentTarget.getAttribute('data-id');
+      if (confirm("Are you sure you want to delete this book from his history?")) {
+        booksList = booksList.filter(b => b.id !== id);
+        saveBooks();
+        renderAll();
+      }
+    });
+  });
+}
+
+function renderAll() {
+  renderDashboard();
+  renderCurrentlyReading();
+  renderHistory();
+}
+
+function formatDateString(dateStr) {
+  if (!dateStr) return "N/A";
+  const date = new Date(dateStr + "T00:00:00");
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// Modal Toggle Handlers
+function openModal(modalId) {
+  document.getElementById(modalId).classList.remove('hidden');
+}
+
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.add('hidden');
+}
+
+// Modal specific logic: ADD BOOK
+function setupAddBookForm() {
+  const form = document.getElementById('add-book-form');
+  const coverSelect = document.getElementById('book-preset-cover');
+  const customCoverGroup = document.getElementById('custom-cover-group');
+  const statusSelect = document.getElementById('book-status');
+  const finishedFields = document.getElementById('form-finished-fields');
+  
+  // Set default date completed to today
+  document.getElementById('book-finish-date').value = new Date().toISOString().slice(0, 10);
+
+  coverSelect.addEventListener('change', () => {
+    if (coverSelect.value === 'custom') {
+      customCoverGroup.classList.remove('hidden');
+    } else {
+      customCoverGroup.classList.add('hidden');
+    }
+  });
+
+  statusSelect.addEventListener('change', () => {
+    if (statusSelect.value === 'finished') {
+      finishedFields.classList.remove('hidden');
+    } else {
+      finishedFields.classList.add('hidden');
+    }
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    
+    const title = document.getElementById('book-title').value;
+    const author = document.getElementById('book-author').value;
+    const totalPages = parseInt(document.getElementById('book-pages').value);
+    const preset = coverSelect.value;
+    const customUrl = document.getElementById('book-custom-cover').value;
+    const status = statusSelect.value;
+    
+    const cover = getCoverUrl(preset, customUrl);
+    
+    const newBook = {
+      id: "book-" + Date.now(),
+      title,
+      author,
+      totalPages,
+      currentPage: status === 'finished' ? totalPages : 0,
+      cover,
+      status,
+      startDate: new Date().toISOString().slice(0, 10),
+      finishDate: status === 'finished' ? document.getElementById('book-finish-date').value : null,
+      rating: status === 'finished' ? parseInt(form.querySelector('input[name="form-rating"]:checked').value) : null,
+      review: status === 'finished' ? document.getElementById('book-review').value : null
+    };
+
+    booksList.push(newBook);
+    saveBooks();
+    renderAll();
+    
+    // reset & close
+    form.reset();
+    customCoverGroup.classList.add('hidden');
+    finishedFields.classList.add('hidden');
+    closeModal('add-book-modal');
+  });
+}
+
+// Modal specific logic: PROGRESS UPDATE
+function openProgressModal(bookId) {
+  const book = booksList.find(b => b.id === bookId);
+  if (!book) return;
+
+  document.getElementById('progress-book-id').value = book.id;
+  document.getElementById('progress-book-title').textContent = book.title;
+  document.getElementById('progress-max-pages').textContent = book.totalPages;
+  
+  const pageInput = document.getElementById('progress-page-input');
+  const slider = document.getElementById('progress-page-slider');
+  
+  pageInput.value = book.currentPage;
+  pageInput.max = book.totalPages;
+  
+  slider.max = book.totalPages;
+  slider.value = book.currentPage;
+  
+  // Link slider and input
+  pageInput.addEventListener('input', () => {
+    let val = parseInt(pageInput.value) || 0;
+    if (val > book.totalPages) val = book.totalPages;
+    slider.value = val;
+  });
+  
+  slider.addEventListener('input', () => {
+    pageInput.value = slider.value;
+  });
+
+  openModal('progress-modal');
+}
+
+// Progress Form submission
+document.getElementById('progress-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const id = document.getElementById('progress-book-id').value;
+  const newPage = parseInt(document.getElementById('progress-page-input').value) || 0;
+  
+  const book = booksList.find(b => b.id === id);
+  if (book) {
+    book.currentPage = Math.min(newPage, book.totalPages);
+    if (book.currentPage === book.totalPages) {
+      // Trigger completion modal!
+      closeModal('progress-modal');
+      openFinishModal(id);
+    } else {
+      saveBooks();
+      renderAll();
+      closeModal('progress-modal');
+    }
+  }
+});
+
+// Modal specific logic: FINISH REVIEW
+function openFinishModal(bookId) {
+  const book = booksList.find(b => b.id === bookId);
+  if (!book) return;
+
+  document.getElementById('finish-book-id').value = book.id;
+  document.getElementById('finish-book-title').textContent = book.title;
+  document.getElementById('finish-date').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('finish-review').value = '';
+
+  openModal('finish-modal');
+}
+
+// Finish Review submission
+document.getElementById('finish-form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const id = document.getElementById('finish-book-id').value;
+  const finishDate = document.getElementById('finish-date').value;
+  const review = document.getElementById('finish-review').value;
+  
+  const ratingInput = document.querySelector('input[name="finish-rating"]:checked');
+  const rating = ratingInput ? parseInt(ratingInput.value) : 3;
+
+  const book = booksList.find(b => b.id === id);
+  if (book) {
+    book.status = 'finished';
+    book.currentPage = book.totalPages;
+    book.finishDate = finishDate;
+    book.rating = rating;
+    book.review = review;
+    
+    saveBooks();
+    renderAll();
+    closeModal('finish-modal');
+  }
+});
+
+// Profile / Settings Logic
+function setupProfileSettings() {
+  const form = document.getElementById('profile-form');
+  const nameInput = document.getElementById('profile-name');
+  const bdayInput = document.getElementById('profile-birthday');
+
+  document.getElementById('btn-edit-profile').addEventListener('click', () => {
+    nameInput.value = sonName;
+    bdayInput.value = sonBirthday;
+    openModal('profile-modal');
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    sonName = nameInput.value;
+    sonBirthday = bdayInput.value;
+    
+    localStorage.setItem('jammies_name', sonName);
+    localStorage.setItem('jammies_bday', sonBirthday);
+    
+    renderAll();
+    closeModal('profile-modal');
+  });
+}
+
+// Backup & Recovery Handlers
+function setupBackupAndRestore() {
+  document.getElementById('btn-export-log').addEventListener('click', () => {
+    const data = {
+      name: sonName,
+      birthday: sonBirthday,
+      books: booksList
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `jammies_reading_tracker_backup.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  const importBtn = document.getElementById('btn-import-trigger');
+  const fileInput = document.getElementById('file-import');
+
+  importBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      try {
+        const data = JSON.parse(evt.target.result);
+        if (data.name) {
+          sonName = data.name;
+          localStorage.setItem('jammies_name', sonName);
+        }
+        if (data.birthday) {
+          sonBirthday = data.birthday;
+          localStorage.setItem('jammies_bday', sonBirthday);
+        }
+        if (Array.isArray(data.books)) {
+          booksList = data.books;
+          saveBooks();
+        }
+        renderAll();
+        alert("Success! Reading log successfully restored.");
+      } catch(err) {
+        alert("Error: Invalid JSON backup file structure.");
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+// Web Audio API Synthesizer controls
 class BedtimeAudio {
   constructor() {
     this.ctx = null;
@@ -104,7 +576,6 @@ class BedtimeAudio {
     }
   }
   
-  // Rain Synthesizer (White Noise + Lowpass Filter + Amplitude LFO)
   playRain() {
     this.init();
     this.stopAll();
@@ -128,10 +599,9 @@ class BedtimeAudio {
     const gainNode = this.ctx.createGain();
     gainNode.gain.value = 0.12;
     
-    // Ambient wind/gust volume modulation
     const lfo = this.ctx.createOscillator();
     lfo.type = 'sine';
-    lfo.frequency.value = 0.15; // 6-7 second wave cycle
+    lfo.frequency.value = 0.15;
     
     const lfoGain = this.ctx.createGain();
     lfoGain.gain.value = 0.04;
@@ -150,7 +620,6 @@ class BedtimeAudio {
     this.currentSource = lfo;
   }
 
-  // Crickets Synthesizer (short pulses of high frequency sines)
   playCrickets() {
     this.init();
     this.stopAll();
@@ -161,7 +630,6 @@ class BedtimeAudio {
       const now = this.ctx.currentTime;
       let startTime = now;
       
-      // 3 tiny chirps per group
       for (let j = 0; j < 3; j++) {
         const osc = this.ctx.createOscillator();
         const gainNode = this.ctx.createGain();
@@ -186,13 +654,12 @@ class BedtimeAudio {
     this.cricketInterval = setInterval(playChirpGroup, 2400);
   }
 
-  // Lullaby Synthesizer (bell-like/musicbox tones in Pentatonic scale)
   playLullaby() {
     this.init();
     this.stopAll();
     this.isPlaying = true;
     
-    const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00]; // C4 to A5 Pentatonic
+    const notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00];
     
     let step = 0;
     const melody = [
@@ -273,7 +740,6 @@ function initStars() {
 function animateStars() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
-  // Custom deep night background gradient
   const grad = ctx.createRadialGradient(
     canvas.width / 2, canvas.height / 2, 10,
     canvas.width / 2, canvas.height / 2, Math.max(canvas.width, canvas.height)
@@ -308,257 +774,39 @@ function resizeCanvas() {
   initStars();
 }
 
-// Speech Synthesis (TTS) Implementation
-function loadVoices() {
-  if (!synth) return;
-  voices = synth.getVoices().filter(voice => voice.lang.startsWith('en'));
-  const voiceSelect = document.getElementById('tts-voice-select');
-  if (!voiceSelect) return;
-  
-  voiceSelect.innerHTML = '';
-  voices.forEach((voice, index) => {
-    const option = document.createElement('option');
-    option.value = index;
-    option.textContent = `${voice.name} (${voice.lang})`;
-    // Select default comfortable/soft reading voices if found
-    if (voice.name.includes('Samantha') || voice.name.includes('Google US English') || voice.name.includes('Natural') || voice.name.includes('Daniel')) {
-      option.selected = true;
-    }
-    voiceSelect.appendChild(option);
-  });
-}
-
-if (synth) {
-  if (synth.onvoiceschanged !== undefined) {
-    synth.onvoiceschanged = loadVoices;
-  }
-  loadVoices();
-}
-
-function speakCurrentPage() {
-  if (!synth || !ttsActive || activeStoryIndex === null) return;
-  
-  synth.cancel(); // Terminate existing narration
-  
-  const text = stories[activeStoryIndex].pages[currentPageIndex];
-  currentUtterance = new SpeechSynthesisUtterance(text);
-  
-  const voiceSelect = document.getElementById('tts-voice-select');
-  if (voiceSelect && voices[voiceSelect.value]) {
-    currentUtterance.voice = voices[voiceSelect.value];
-  }
-  
-  const speed = parseFloat(document.getElementById('tts-speed').value);
-  currentUtterance.rate = speed;
-  currentUtterance.pitch = 1.0; 
-  
-  currentUtterance.onend = () => {
-    // End event hook if needed
-  };
-  
-  synth.speak(currentUtterance);
-}
-
-function stopSpeaking() {
-  if (synth) {
-    synth.cancel();
-  }
-}
-
-// App Logic & Views rendering
-function updateStarUI() {
-  document.getElementById('star-count').textContent = starCount;
-}
-
-function renderCatalog() {
-  const grid = document.getElementById('stories-grid');
-  grid.innerHTML = '';
-  
-  stories.forEach((story, index) => {
-    const card = document.createElement('div');
-    card.className = 'story-card';
-    card.innerHTML = `
-      <div class="card-img-container">
-        <img src="${story.cover}" alt="${story.title}">
-        <span class="card-badge"><i class="fa-solid fa-moon"></i> Bedtime</span>
-      </div>
-      <div class="card-content">
-        <span class="card-subtitle">${story.subtitle}</span>
-        <h4>${story.title}</h4>
-        <p class="card-desc">${story.description}</p>
-        <div class="card-meta">
-          <span><i class="fa-regular fa-clock"></i> ${story.duration}</span>
-          <span><i class="fa-solid fa-child"></i> ${story.difficulty}</span>
-        </div>
-        <button class="btn-read" data-index="${index}">
-          <i class="fa-solid fa-book-open"></i> Read Story
-        </button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-
-  // Attach card readers
-  grid.querySelectorAll('.btn-read').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt(e.currentTarget.getAttribute('data-index'));
-      openStory(idx);
-    });
-  });
-}
-
-function openStory(index) {
-  activeStoryIndex = index;
-  currentPageIndex = 0;
-  
-  // Show Reader Room, Hide Catalog/Hero
-  document.getElementById('catalog-section').classList.add('hidden');
-  document.getElementById('hero-section').classList.add('hidden');
-  document.getElementById('reader-section').classList.remove('hidden');
-  
-  // Render Story Contents
-  const story = stories[index];
-  document.getElementById('story-title').textContent = story.title;
-  document.getElementById('story-illustration').src = story.cover;
-  document.getElementById('total-pages-num').textContent = story.pages.length;
-  
-  updatePageContent();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function closeStory() {
-  activeStoryIndex = null;
-  stopSpeaking();
-  ttsActive = false;
-  document.getElementById('btn-tts-toggle').classList.remove('active');
-  document.getElementById('tts-settings-dropdown').classList.add('hidden');
-  
-  document.getElementById('reader-section').classList.add('hidden');
-  document.getElementById('catalog-section').classList.remove('hidden');
-  document.getElementById('hero-section').classList.remove('hidden');
-}
-
-function updatePageContent() {
-  if (activeStoryIndex === null) return;
-  const story = stories[activeStoryIndex];
-  
-  // Setup elements
-  const pageContainer = document.getElementById('story-page-content');
-  pageContainer.textContent = story.pages[currentPageIndex];
-  pageContainer.className = `story-page-content ${textSizeClass}`;
-  
-  document.getElementById('current-page-num').textContent = currentPageIndex + 1;
-  
-  // Button States
-  document.getElementById('btn-prev-page').disabled = (currentPageIndex === 0);
-  
-  const nextBtn = document.getElementById('btn-next-page');
-  if (currentPageIndex === story.pages.length - 1) {
-    nextBtn.innerHTML = `Finish <i class="fa-solid fa-circle-check"></i>`;
-  } else {
-    nextBtn.innerHTML = `Next <i class="fa-solid fa-chevron-right"></i>`;
-  }
-  
-  // Narration
-  if (ttsActive) {
-    speakCurrentPage();
-  }
-}
-
-function handleNextPage() {
-  if (activeStoryIndex === null) return;
-  const story = stories[activeStoryIndex];
-  
-  if (currentPageIndex < story.pages.length - 1) {
-    currentPageIndex++;
-    updatePageContent();
-  } else {
-    // Completed the story!
-    triggerCompletion();
-  }
-}
-
-function handlePrevPage() {
-  if (currentPageIndex > 0) {
-    currentPageIndex--;
-    updatePageContent();
-  }
-}
-
-function triggerCompletion() {
-  stopSpeaking();
-  // Award star
-  starCount++;
-  localStorage.setItem('jammies_stars', starCount.toString());
-  updateStarUI();
-  
-  // Trigger particle burst and show modal
-  document.getElementById('star-modal').classList.remove('hidden');
-}
-
-// UI Event Listeners setup
+// App Initialization
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize star count
-  updateStarUI();
+  // Load State
+  loadState();
   
-  // Render stories grid
-  renderCatalog();
+  // Render Everything
+  renderAll();
   
   // Canvas Setup
   window.addEventListener('resize', resizeCanvas);
   resizeCanvas();
   animateStars();
+
+  // Setup Form logic
+  setupAddBookForm();
   
-  // Catalog Back Button
-  document.getElementById('btn-back-to-catalog').addEventListener('click', closeStory);
+  // Settings profile setup
+  setupProfileSettings();
   
-  // Navigation Buttons
-  document.getElementById('btn-prev-page').addEventListener('click', handlePrevPage);
-  document.getElementById('btn-next-page').addEventListener('click', handleNextPage);
+  // Setup backup & restore
+  setupBackupAndRestore();
+
+  // Add Book Modal triggers
+  document.getElementById('btn-add-book').addEventListener('click', () => openModal('add-book-modal'));
   
-  // Modal Dismissal
-  document.getElementById('btn-close-modal').addEventListener('click', () => {
-    document.getElementById('star-modal').classList.add('hidden');
-    closeStory();
-  });
-  
-  // Text Size Adjustment
-  document.getElementById('btn-decrease-text').addEventListener('click', () => {
-    if (textSizeClass === 'text-large') {
-      textSizeClass = 'text-medium';
-    } else if (textSizeClass === 'text-medium') {
-      textSizeClass = 'text-normal';
-    }
-    updatePageContent();
-  });
-  
-  document.getElementById('btn-increase-text').addEventListener('click', () => {
-    if (textSizeClass === 'text-normal') {
-      textSizeClass = 'text-medium';
-    } else if (textSizeClass === 'text-medium') {
-      textSizeClass = 'text-large';
-    }
-    updatePageContent();
-  });
-  
-  // TTS Narration Toggle
-  const ttsBtn = document.getElementById('btn-tts-toggle');
-  const ttsDropdown = document.getElementById('tts-settings-dropdown');
-  
-  ttsBtn.addEventListener('click', () => {
-    ttsActive = !ttsActive;
-    if (ttsActive) {
-      ttsBtn.classList.add('active');
-      ttsDropdown.classList.remove('hidden');
-      speakCurrentPage();
-    } else {
-      ttsBtn.classList.remove('active');
-      ttsDropdown.classList.add('hidden');
-      stopSpeaking();
-    }
+  // Close Modals buttons
+  document.querySelectorAll('.close-modal-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      closeModal(e.currentTarget.getAttribute('data-modal'));
+    });
   });
 
-  // Soundscape selector toggle and play
+  // Soundscape togglers
   const soundSelect = document.getElementById('ambient-sound-select');
   const soundToggle = document.getElementById('btn-ambient-toggle');
   
