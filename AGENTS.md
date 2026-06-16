@@ -3,10 +3,13 @@
 This project was bootstrapped from [agy-template](file:///Users/bhsiao/dev/gdrive/agy-template).
 
 ## Goal
-(To be defined)
+An interactive, bedtime story reader/generator web app with curated stories, calming themes, text-to-speech, and responsive illustration generation.
 
 ## Stack
-(To be defined)
+- Frontend: HTML5 (Semantic), Vanilla CSS3, Vanilla JavaScript (ES6)
+- Soundscapes: Web Audio API (real-time synthesizers)
+- Narration: Web Speech API (SpeechSynthesis)
+- Deployment: GitHub Pages
 
 ## What's included
 
