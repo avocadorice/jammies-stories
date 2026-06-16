@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Jammies Stories - Cozy bedtime stories for kids with interactive narrations, calming themes, and relaxing soundscapes.">
+  <meta name="theme-color" content="#0b0d1b">
+  <title>Jammies Stories - Cozy Bedtime Tales & Lullabies</title>
+  <!-- Google Fonts: Quicksand for headings, Nunito for reading text -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300..700;1,300..700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  <!-- FontAwesome for cute icons (loaded from CDN) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Starry Canvas Background -->
+  <canvas id="starfield-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="header-logo-container">
+        <img src="assets/jammies_logo.jpg" alt="Jammies Stories Moon Logo" id="app-logo" class="app-logo">
+        <div class="logo-text">
+          <h1 id="app-title">Jammies Stories</h1>
+          <p class="tagline">Cozy Tales & Dreams</p>
+        </div>
+      </div>
+      
+      <div class="header-controls">
+        <!-- Star Counter / Gamification -->
+        <div class="star-badge" id="star-badge" title="Stars collected tonight!">
+          <i class="fa-solid fa-star star-icon"></i>
+          <span id="star-count">0</span>
+        </div>
+
+        <!-- Ambient Sound Control Panel -->
+        <div class="ambient-sound-control">
+          <button id="btn-ambient-toggle" class="control-btn sound-toggle-btn" title="Toggle Calming Sounds">
+            <i class="fa-solid fa-music"></i>
+            <span>Lullaby: Off</span>
+          </button>
+          <div class="sound-selector-wrapper">
+            <select id="ambient-sound-select" aria-label="Select ambient soundscape">
+              <option value="none">Silence</option>
+              <option value="lullaby" selected>Dreamy Lullaby</option>
+              <option value="rain">Soft Rain</option>
+              <option value="crickets">Night Crickets</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Welcome Section (Hero) -->
+      <section id="hero-section" class="hero-section">
+        <h2>Time for Bed, Little Explorer</h2>
+        <p>Choose a story, put on your favorite jammies, and let's go on a cozy adventure together.</p>
+      </section>
+
+      <!-- Story Catalog Grid -->
+      <section id="catalog-section" class="catalog-section">
+        <div class="section-header">
+          <h3><i class="fa-solid fa-book-open"></i> Story Selection</h3>
+        </div>
+        <div id="stories-grid" class="stories-grid">
+          <!-- Stories will be rendered here dynamically via JS -->
+        </div>
+      </section>
+
+      <!-- Reader Section (Hidden by default) -->
+      <section id="reader-section" class="reader-section hidden">
+        <div class="reader-header">
+          <button id="btn-back-to-catalog" class="back-btn">
+            <i class="fa-solid fa-arrow-left"></i> Close Story
+          </button>
+          
+          <div class="reader-settings">
+            <!-- Text Resize -->
+            <button id="btn-decrease-text" class="setting-btn" title="Make text smaller">A-</button>
+            <button id="btn-increase-text" class="setting-btn" title="Make text larger">A+</button>
+            
+            <!-- TTS Toggle & Controls -->
+            <div class="narration-controls">
+              <button id="btn-tts-toggle" class="tts-btn" title="Read to me">
+                <i class="fa-solid fa-volume-high"></i> Narration
+              </button>
+              <div class="tts-settings-dropdown hidden" id="tts-settings-dropdown">
+                <label for="tts-voice-select">Voice:</label>
+                <select id="tts-voice-select"></select>
+                
+                <label for="tts-speed">Speed:</label>
+                <input type="range" id="tts-speed" min="0.5" max="1.5" step="0.1" value="0.9">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reader-card">
+          <!-- Story Illustration -->
+          <div class="reader-illustration-container">
+            <img id="story-illustration" src="" alt="Story Illustration">
+          </div>
+
+          <!-- Story Text Content -->
+          <div class="story-content">
+            <h2 id="story-title">Story Title</h2>
+            <div id="story-page-content" class="story-page-content">
+              <!-- Current page text goes here -->
+            </div>
+          </div>
+
+          <!-- Reader Navigation -->
+          <div class="reader-navigation">
+            <button id="btn-prev-page" class="nav-btn"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+            <div class="page-indicator">
+              Page <span id="current-page-num">1</span> of <span id="total-pages-num">5</span>
+            </div>
+            <button id="btn-next-page" class="nav-btn highlight-btn">Next <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Star Collection Modal -->
+    <div id="star-modal" class="modal hidden">
+      <div class="modal-content glass-card">
+        <div class="star-animation-container">
+          <i class="fa-solid fa-star big-star"></i>
+          <div class="burst-particles"></div>
+        </div>
+        <h3>Sweet Dreams!</h3>
+        <p>You completed the story and collected a sleeping star. Keep up the great bedtime routine!</p>
+        <button id="btn-close-modal" class="modal-btn">Collect Star & Return</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+      <p>&copy; 2026 Jammies Stories. Lovingly crafted for sweet dreams.</p>
+    </footer>
+  </div>
+
+  <!-- Javascript -->
+  <script src="app.js"></script>
+</body>
+</html>
