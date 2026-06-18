@@ -277,8 +277,10 @@
 
   <script>
     // ── Constants ───────────────────────────────────────────────────────────────
-    const KIDS = ['Preston', 'Blaire'];
-    const DOB  = '2024-08-09';
+    const KIDS_INFO = {
+      Preston: { dob: '2019-07-20' },
+      Blaire:  { dob: '2024-08-09' }
+    };
 
     const COVER_MAP = {
       unihorn: '/static/assets/team_unicorn.jpg',
@@ -306,8 +308,13 @@
     }
 
     // ── Age helpers ─────────────────────────────────────────────────────────────
+    function getDOB() {
+      return KIDS_INFO[currentKid]?.dob || '2024-08-09';
+    }
+
+    // Displays full age string (e.g. 6 years, 10 months)
     function calcAgeString(targetDateStr) {
-      const birth  = new Date(DOB + 'T00:00:00');
+      const birth  = new Date(getDOB() + 'T00:00:00');
       const target = targetDateStr ? new Date(targetDateStr + 'T00:00:00') : new Date();
 
       let years = target.getFullYear() - birth.getFullYear();
@@ -325,8 +332,9 @@
       return parts.join(', ');
     }
 
+    // Displays short age string (e.g. 6y 10m)
     function calcAgeShort(targetDateStr) {
-      const birth  = new Date(DOB + 'T00:00:00');
+      const birth  = new Date(getDOB() + 'T00:00:00');
       const target = new Date(targetDateStr + 'T00:00:00');
 
       let years = target.getFullYear() - birth.getFullYear();

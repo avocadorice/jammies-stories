@@ -42,5 +42,5 @@ fly.toml
 - `POST /api/restore`           — restores full data from JSON upload
 
 ## Kids
-- **Preston** — born Aug 9, 2024
+- **Preston** — born July 20, 2019
 - **Blaire**  — born Aug 9, 2024
