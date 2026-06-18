@@ -1,26 +1,46 @@
 # jammies-stories
 
-This project was bootstrapped from [agy-template](file:///Users/bhsiao/dev/gdrive/agy-template).
-
 ## Goal
-An interactive, bedtime story reader/generator web app with curated stories, calming themes, text-to-speech, and responsive illustration generation.
+Jammy's Book Tracker — a reading log for Preston and Blaire tracking books from the "Team Unihorn and Woolly" series and beyond.
 
 ## Stack
-- Frontend: HTML5 (Semantic), Vanilla CSS3, Vanilla JavaScript (ES6)
-- Soundscapes: Web Audio API (real-time synthesizers)
-- Narration: Web Speech API (SpeechSynthesis)
-- Deployment: GitHub Pages
+- Backend: Go (stdlib only — `net/http`, `html/template`, `encoding/json`)
+- Frontend: HTML5, Vanilla CSS3, Vanilla JS (ES6), FontAwesome icons
+- Storage: JSON file at `data/books.json` (persistent volume on Fly.io)
+- Deployment: Fly.io (`fly.toml` + `Dockerfile`)
 
-## What's included
+## Running locally
+```
+go run main.go
+# open http://localhost:8080
+```
 
-- **Auto-logging hooks** — every prompt and the agent's final response are appended to `logs/session.log` automatically via Antigravity workspace-level lifecycle hooks.
-- **`new-project` skill** — the agent can interactively walk you through bootstrapping a new project when you ask to create/bootstrap a new project.
+## Deploying to Fly.io
+```
+fly launch        # first time — creates the app and volume
+fly deploy        # subsequent deploys
+```
 
-## Session log
+The `fly.toml` mounts a persistent volume at `/app/data` so book data survives redeploys.
 
-`logs/session.log` is updated automatically via hooks configured in `.agents/hooks.json`:
-- **`PreInvocation`** (runs `log-prompt.py`): Logs your prompt.
-- **`Stop`** (runs `log-session-end.py`): Captures the last response from the transcript and appends it.
+## Project structure
+```
+main.go           — Go HTTP server + REST API
+templates/        — HTML template served at /
+static/           — CSS + assets served at /static/
+  style.css
+  assets/
+data/             — Runtime JSON storage (gitignored in production)
+Dockerfile
+fly.toml
+```
 
-Use this to review what was discussed across sessions without re-reading full transcripts.
+## API
+- `GET  /api/books?kid=Preston` — returns []Book for a kid
+- `POST /api/books?kid=Preston` — saves full []Book list for a kid
+- `GET  /api/backup`            — downloads full data as JSON
+- `POST /api/restore`           — restores full data from JSON upload
 
+## Kids
+- **Preston** — born Aug 9, 2024
+- **Blaire**  — born Aug 9, 2024

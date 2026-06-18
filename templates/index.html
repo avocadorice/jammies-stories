@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Jammy's Book Tracker - Reading log for Preston and Blaire.">
+  <meta name="theme-color" content="#0b0d1b">
+  <title>Jammy's Book Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,300..700;1,300..700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <canvas id="starfield-canvas"></canvas>
+
+  <div class="app-container">
+    <header class="main-header">
+      <div class="header-logo-container">
+        <img src="/static/assets/jammies_logo.jpg" alt="Jammy's Book Tracker Logo" class="app-logo">
+        <div class="logo-text">
+          <h1>Jammy's Book Tracker</h1>
+          <p class="tagline">Tracking Reading Milestones</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <button id="btn-export-log" class="dashboard-action-btn secondary-action" title="Download backup">
+          <i class="fa-solid fa-download"></i> Backup
+        </button>
+        <button id="btn-import-trigger" class="dashboard-action-btn secondary-action" title="Restore from backup">
+          <i class="fa-solid fa-upload"></i> Restore
+        </button>
+        <input type="file" id="file-import" class="hidden" accept=".json">
+      </div>
+    </header>
+
+    <main class="main-content">
+      <!-- Kid Switcher + Dashboard -->
+      <section id="dashboard-section" class="dashboard-section glass-card">
+        <div class="kid-tabs">
+          <button class="kid-tab active" data-kid="Preston">
+            <i class="fa-solid fa-star"></i> Preston
+          </button>
+          <button class="kid-tab" data-kid="Blaire">
+            <i class="fa-solid fa-moon"></i> Blaire
+          </button>
+        </div>
+
+        <div class="profile-header">
+          <div class="profile-avatar">
+            <i class="fa-solid fa-book-open avatar-icon"></i>
+          </div>
+          <div class="profile-info">
+            <h2 id="display-name">Preston's Log</h2>
+            <p class="birthday-badge">
+              <i class="fa-solid fa-cake-candles"></i> Born Aug 9, 2024 &bull;
+              <span id="display-age" class="age-highlight">Loading age...</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="stats-container">
+          <div class="stat-card">
+            <div class="stat-icon-wrapper gold"><i class="fa-solid fa-book"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-books-read">0</span>
+              <label>Completed Books</label>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper purple"><i class="fa-solid fa-book-open-reader"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-books-current">0</span>
+              <label>Currently Reading</label>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper teal"><i class="fa-solid fa-file-invoice"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-pages-read">0</span>
+              <label>Total Pages Logged</label>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper blue" style="background: rgba(54, 162, 235, 0.15); color: #36a2eb;"><i class="fa-solid fa-clock"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-minutes-read">0</span>
+              <label>Total Minutes</label>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrapper coral"><i class="fa-solid fa-star"></i></div>
+            <div class="stat-numbers">
+              <span id="stat-stars-rating">0.0</span>
+              <label>Avg Rating</label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Currently Reading -->
+      <section id="current-reading-section" class="catalog-section">
+        <div class="section-header">
+          <h3><i class="fa-solid fa-book-open-reader text-purple"></i> Currently Reading</h3>
+          <button id="btn-add-book" class="add-book-btn">
+            <i class="fa-solid fa-circle-plus"></i> Add Book
+          </button>
+        </div>
+        <div id="current-books-grid" class="books-grid"></div>
+      </section>
+
+      <!-- Reading History -->
+      <section id="history-section" class="catalog-section">
+        <div class="section-header">
+          <h3><i class="fa-solid fa-clock-rotate-left text-teal"></i> Reading History</h3>
+        </div>
+        <div class="history-table-card glass-card">
+          <div class="history-list-header">
+            <span>Book &amp; Title</span>
+            <span>Pages</span>
+            <span>Date Finished</span>
+            <span>Age at Completion</span>
+            <span>Rating &amp; Review</span>
+            <span>Actions</span>
+          </div>
+          <div id="history-list-body" class="history-list-body"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Modal: Add New Book -->
+    <div id="add-book-modal" class="modal hidden">
+      <div class="modal-content glass-card form-modal">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-book"></i> Log a New Book</h3>
+          <button class="close-modal-btn" data-modal="add-book-modal">&times;</button>
+        </div>
+        <form id="add-book-form" class="modal-form">
+          <div class="form-group">
+            <label for="book-title">Book Title*</label>
+            <input type="text" id="book-title" required placeholder="e.g. Team Unihorn and Woolly">
+          </div>
+          <div class="form-group">
+            <label for="book-author">Author</label>
+            <input type="text" id="book-author" placeholder="e.g. A. Wakewood">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="book-pages">Total Pages*</label>
+              <input type="number" id="book-pages" min="1" required placeholder="e.g. 40">
+            </div>
+            <div class="form-group">
+              <label for="book-preset-cover">Cover</label>
+              <select id="book-preset-cover">
+                <option value="unihorn">Team Unihorn (Series)</option>
+                <option value="woolly">Woolly (Series)</option>
+                <option value="custom">Custom URL...</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group hidden" id="custom-cover-group">
+            <label for="book-custom-cover">Custom Cover Image URL</label>
+            <input type="url" id="book-custom-cover" placeholder="https://example.com/cover.jpg">
+          </div>
+          <div class="form-group">
+            <label for="book-status">Reading Status</label>
+            <select id="book-status">
+              <option value="reading">Currently Reading</option>
+              <option value="finished">Finished Already</option>
+            </select>
+          </div>
+          <div id="form-finished-fields" class="hidden">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="book-finish-date">Date Finished</label>
+                <input type="date" id="book-finish-date">
+              </div>
+              <div class="form-group">
+                <label>Rating</label>
+                <div class="star-rating-input">
+                  <input type="radio" name="form-rating" id="star-5" value="5"><label for="star-5" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-4" value="4"><label for="star-4" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-3" value="3" checked><label for="star-3" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-2" value="2"><label for="star-2" class="fa-solid fa-star"></label>
+                  <input type="radio" name="form-rating" id="star-1" value="1"><label for="star-1" class="fa-solid fa-star"></label>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="book-review">Review Note</label>
+              <input type="text" id="book-review" placeholder="e.g. 'Loved the part with the castle!'">
+            </div>
+          </div>
+          <button type="submit" class="submit-btn">Save Book</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Update Progress -->
+    <div id="progress-modal" class="modal hidden">
+      <div class="modal-content glass-card form-modal small-modal">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-bars-progress"></i> Update Reading Page</h3>
+          <button class="close-modal-btn" data-modal="progress-modal">&times;</button>
+        </div>
+        <form id="progress-form" class="modal-form">
+          <input type="hidden" id="progress-book-id">
+          <h4 id="progress-book-title" class="progress-title">Book Title</h4>
+          <div class="progress-slider-container">
+            <label for="progress-page-input">Current Page:</label>
+            <div class="progress-input-group">
+              <input type="number" id="progress-page-input" min="0" required>
+              <span>/ <strong id="progress-max-pages">100</strong></span>
+            </div>
+            <input type="range" id="progress-page-slider" min="0" value="0">
+          </div>
+          <button type="submit" class="submit-btn">Update Progress</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Book Finished -->
+    <div id="finish-modal" class="modal hidden">
+      <div class="modal-content glass-card form-modal">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-trophy text-gold"></i> Book Finished!</h3>
+          <button class="close-modal-btn" data-modal="finish-modal">&times;</button>
+        </div>
+        <form id="finish-form" class="modal-form">
+          <input type="hidden" id="finish-book-id">
+          <h4 id="finish-book-title" class="finish-title">Title</h4>
+          <p class="finish-congrats">Hooray! Let's log the review.</p>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="finish-date">Date Completed</label>
+              <input type="date" id="finish-date" required>
+            </div>
+            <div class="form-group">
+              <label>Rating</label>
+              <div class="star-rating-input">
+                <input type="radio" name="finish-rating" id="f-star-5" value="5"><label for="f-star-5" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-4" value="4"><label for="f-star-4" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-3" value="3" checked><label for="f-star-3" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-2" value="2"><label for="f-star-2" class="fa-solid fa-star"></label>
+                <input type="radio" name="finish-rating" id="f-star-1" value="1"><label for="f-star-1" class="fa-solid fa-star"></label>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="finish-review">Review Note</label>
+            <input type="text" id="finish-review" placeholder="e.g. 'The unicorns saved the forest!'">
+          </div>
+          <button type="submit" class="submit-btn success-btn">Log to History</button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="main-footer">
+      <p>&copy; 2026 Jammy's Book Tracker &mdash; Lovingly tracking childhood reading, page by page.</p>
+    </footer>
+  </div>
+
+  <script>
+    // ── Constants ───────────────────────────────────────────────────────────────
+    const KIDS = ['Preston', 'Blaire'];
+    const DOB  = '2024-08-09';
+
+    const COVER_MAP = {
+      unihorn: '/static/assets/team_unicorn.jpg',
+      woolly:  '/static/assets/woolly.jpg',
+    };
+
+    // ── State ───────────────────────────────────────────────────────────────────
+    let currentKid = 'Preston';
+    let booksList  = [];
+
+    // ── API ─────────────────────────────────────────────────────────────────────
+    async function fetchBooks() {
+      const res = await fetch(`/api/books?kid=${encodeURIComponent(currentKid)}`);
+      booksList = await res.json();
+      if (!Array.isArray(booksList)) booksList = [];
+      renderAll();
+    }
+
+    async function saveBooks() {
+      await fetch(`/api/books?kid=${encodeURIComponent(currentKid)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(booksList),
+      });
+    }
+
+    // ── Age helpers ─────────────────────────────────────────────────────────────
+    function calcAgeString(targetDateStr) {
+      const birth  = new Date(DOB + 'T00:00:00');
+      const target = targetDateStr ? new Date(targetDateStr + 'T00:00:00') : new Date();
+
+      let years = target.getFullYear() - birth.getFullYear();
+      let months = target.getMonth() - birth.getMonth();
+      let days  = target.getDate()  - birth.getDate();
+
+      if (days < 0) { months--; days += new Date(target.getFullYear(), target.getMonth(), 0).getDate(); }
+      if (months < 0) { years--; months += 12; }
+      if (years < 0) return 'Not born yet!';
+
+      const parts = [];
+      if (years  > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+      if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+      if (years === 0 && months === 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+      return parts.join(', ');
+    }
+
+    function calcAgeShort(targetDateStr) {
+      const birth  = new Date(DOB + 'T00:00:00');
+      const target = new Date(targetDateStr + 'T00:00:00');
+
+      let years = target.getFullYear() - birth.getFullYear();
+      let months = target.getMonth() - birth.getMonth();
+      const days = target.getDate() - birth.getDate();
+
+      if (days < 0) months--;
+      if (months < 0) { years--; months += 12; }
+      if (years < 0) return '0y';
+      return `${years}y ${months}m`;
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N/A';
+      return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function getCoverUrl(preset, customUrl) {
+      return preset === 'custom' ? (customUrl || COVER_MAP.unihorn) : (COVER_MAP[preset] || COVER_MAP.unihorn);
+    }
+
+    // ── Render ──────────────────────────────────────────────────────────────────
+    function renderDashboard() {
+      document.getElementById('display-name').textContent = `${currentKid}'s Log`;
+      document.getElementById('display-age').textContent  = calcAgeString();
+
+      const completed = booksList.filter(b => b.status === 'finished');
+      const reading   = booksList.filter(b => b.status === 'reading');
+      let totalPages  = 0;
+      let totalMinutes = 0;
+      
+      booksList.forEach(b => {
+        totalPages += b.status === 'finished' ? b.totalPages : b.currentPage;
+        if (b.sessions) {
+          b.sessions.forEach(s => {
+            totalMinutes += s.minutes || 0;
+          });
+        }
+      });
+
+      const avgRating = completed.length
+        ? (completed.reduce((s, b) => s + (b.rating || 0), 0) / completed.length).toFixed(1)
+        : '0.0';
+
+      document.getElementById('stat-books-read').textContent    = completed.length;
+      document.getElementById('stat-books-current').textContent = reading.length;
+      document.getElementById('stat-pages-read').textContent    = totalPages;
+      document.getElementById('stat-minutes-read').textContent  = totalMinutes;
+      document.getElementById('stat-stars-rating').textContent  = avgRating;
+    }
+
+    function renderCurrentlyReading() {
+      const grid = document.getElementById('current-books-grid');
+      grid.innerHTML = '';
+
+      const reading = booksList.filter(b => b.status === 'reading');
+      if (reading.length === 0) {
+        grid.innerHTML = `<div class="empty-history" style="grid-column:1/-1;width:100%"><i class="fa-solid fa-book-open"></i><p>No books currently reading. Click "Add Book" to start!</p></div>`;
+        return;
+      }
+
+      reading.forEach(book => {
+        const pct  = Math.round((book.currentPage / book.totalPages) * 100);
+        let bookMinutes = 0;
+        if (book.sessions) {
+          book.sessions.forEach(s => { bookMinutes += s.minutes || 0; });
+        }
+        const card = document.createElement('div');
+        card.className = 'book-card';
+        card.innerHTML = `
+          <img src="${book.cover}" alt="${book.title}" class="book-card-cover">
+          <div class="book-card-details">
+            <h4>${book.title}</h4>
+            <span class="book-author">by ${book.author || 'Unknown Author'}</span>
+            ${bookMinutes ? `<span class="book-time" style="font-size:0.85rem;color:var(--accent-purple);display:flex;align-items:center;gap:0.3rem;"><i class="fa-regular fa-clock"></i> ${bookMinutes} mins read</span>` : ''}
+            <div class="book-progress-wrapper">
+              <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+              <div class="progress-label"><span>Page ${book.currentPage} of ${book.totalPages}</span><span>${pct}%</span></div>
+            </div>
+            <div class="book-card-actions">
+              <button class="card-action-btn btn-progress-update" data-id="${book.id}"><i class="fa-solid fa-pen"></i> Progress</button>
+              <button class="card-action-btn btn-mark-finish" data-id="${book.id}"><i class="fa-solid fa-check"></i> Finish</button>
+            </div>
+          </div>`;
+        grid.appendChild(card);
+      });
+
+      grid.querySelectorAll('.btn-progress-update').forEach(btn =>
+        btn.addEventListener('click', e => openProgressModal(e.currentTarget.dataset.id)));
+      grid.querySelectorAll('.btn-mark-finish').forEach(btn =>
+        btn.addEventListener('click', e => openFinishModal(e.currentTarget.dataset.id)));
+    }
+
+    function renderHistory() {
+      const body = document.getElementById('history-list-body');
+      body.innerHTML = '';
+
+      const finished = booksList
+        .filter(b => b.status === 'finished')
+        .sort((a, b) => new Date(b.finishDate) - new Date(a.finishDate));
+
+      if (finished.length === 0) {
+        body.innerHTML = `<div class="empty-history"><i class="fa-solid fa-folder-open"></i><p>No completed books yet. History starts here!</p></div>`;
+        return;
+      }
+
+      finished.forEach(book => {
+        const age = calcAgeShort(book.finishDate);
+        let stars = '';
+        for (let i = 1; i <= 5; i++) {
+          stars += i <= (book.rating || 0)
+            ? '<i class="fa-solid fa-star"></i>'
+            : '<i class="fa-regular fa-star"></i>';
+        }
+        let bookMinutes = 0;
+        if (book.sessions) {
+          book.sessions.forEach(s => { bookMinutes += s.minutes || 0; });
+        }
+        const row = document.createElement('div');
+        row.className = 'history-row';
+        row.innerHTML = `
+          <div class="history-book-info">
+            <img src="${book.cover}" alt="${book.title}" class="history-book-cover">
+            <div class="history-book-title-meta"><strong>${book.title}</strong><span>by ${book.author || 'Unknown'}</span></div>
+          </div>
+          <span>${book.totalPages} pages${bookMinutes ? ` (${bookMinutes}m)` : ''}</span>
+          <span>${formatDate(book.finishDate)}</span>
+          <span class="history-age">${age}</span>
+          <div class="history-rating">
+            <span class="stars-display">${stars}</span>
+            <span class="review-quote" title="${book.review || ''}">${book.review ? `"${book.review}"` : 'No review'}</span>
+          </div>
+          <button class="btn-delete-log" data-id="${book.id}" title="Delete"><i class="fa-solid fa-trash-can"></i></button>`;
+        body.appendChild(row);
+      });
+
+      body.querySelectorAll('.btn-delete-log').forEach(btn =>
+        btn.addEventListener('click', async e => {
+          const id = e.currentTarget.dataset.id;
+          if (!confirm('Delete this book from history?')) return;
+          booksList = booksList.filter(b => b.id !== id);
+          await saveBooks();
+          renderAll();
+        }));
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderCurrentlyReading();
+      renderHistory();
+    }
+
+    // ── Modal helpers ───────────────────────────────────────────────────────────
+    function openModal(id)  { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    // ── Progress modal ──────────────────────────────────────────────────────────
+    function openProgressModal(bookId) {
+      const book = booksList.find(b => b.id === bookId);
+      if (!book) return;
+
+      document.getElementById('progress-book-id').value    = book.id;
+      document.getElementById('progress-book-title').textContent = book.title;
+      document.getElementById('progress-max-pages').textContent  = book.totalPages;
+
+      const pageInput = document.getElementById('progress-page-input');
+      const slider    = document.getElementById('progress-page-slider');
+
+      pageInput.value = book.currentPage;
+      pageInput.max   = book.totalPages;
+      slider.max      = book.totalPages;
+      slider.value    = book.currentPage;
+
+      pageInput.oninput = () => { let v = Math.min(parseInt(pageInput.value) || 0, book.totalPages); slider.value = v; };
+      slider.oninput    = () => { pageInput.value = slider.value; };
+
+      openModal('progress-modal');
+    }
+
+    document.getElementById('progress-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id   = document.getElementById('progress-book-id').value;
+      const page = parseInt(document.getElementById('progress-page-input').value) || 0;
+      const book = booksList.find(b => b.id === id);
+      if (!book) return;
+      book.currentPage = Math.min(page, book.totalPages);
+      if (book.currentPage === book.totalPages) {
+        closeModal('progress-modal');
+        openFinishModal(id);
+      } else {
+        await saveBooks();
+        renderAll();
+        closeModal('progress-modal');
+      }
+    });
+
+    // ── Finish modal ────────────────────────────────────────────────────────────
+    function openFinishModal(bookId) {
+      const book = booksList.find(b => b.id === bookId);
+      if (!book) return;
+      document.getElementById('finish-book-id').value           = book.id;
+      document.getElementById('finish-book-title').textContent  = book.title;
+      document.getElementById('finish-date').value              = new Date().toISOString().slice(0, 10);
+      document.getElementById('finish-review').value            = '';
+      openModal('finish-modal');
+    }
+
+    document.getElementById('finish-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const id         = document.getElementById('finish-book-id').value;
+      const finishDate = document.getElementById('finish-date').value;
+      const review     = document.getElementById('finish-review').value;
+      const ratingEl   = document.querySelector('input[name="finish-rating"]:checked');
+      const rating     = ratingEl ? parseInt(ratingEl.value) : 3;
+
+      const book = booksList.find(b => b.id === id);
+      if (!book) return;
+      book.status      = 'finished';
+      book.currentPage = book.totalPages;
+      book.finishDate  = finishDate;
+      book.rating      = rating;
+      book.review      = review;
+
+      await saveBooks();
+      renderAll();
+      closeModal('finish-modal');
+    });
+
+    // ── Add Book form ───────────────────────────────────────────────────────────
+    function setupAddBookForm() {
+      const form            = document.getElementById('add-book-form');
+      const coverSelect     = document.getElementById('book-preset-cover');
+      const customGroup     = document.getElementById('custom-cover-group');
+      const statusSelect    = document.getElementById('book-status');
+      const finishedFields  = document.getElementById('form-finished-fields');
+
+      document.getElementById('book-finish-date').value = new Date().toISOString().slice(0, 10);
+
+      coverSelect.onchange  = () => customGroup.classList.toggle('hidden', coverSelect.value !== 'custom');
+      statusSelect.onchange = () => finishedFields.classList.toggle('hidden', statusSelect.value !== 'finished');
+
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const status = statusSelect.value;
+        const cover  = getCoverUrl(coverSelect.value, document.getElementById('book-custom-cover').value);
+
+        const newBook = {
+          id:          'book-' + Date.now(),
+          title:       document.getElementById('book-title').value,
+          author:      document.getElementById('book-author').value,
+          totalPages:  parseInt(document.getElementById('book-pages').value),
+          currentPage: status === 'finished' ? parseInt(document.getElementById('book-pages').value) : 0,
+          cover,
+          status,
+          startDate:   new Date().toISOString().slice(0, 10),
+          finishDate:  status === 'finished' ? document.getElementById('book-finish-date').value : '',
+          rating:      status === 'finished' ? parseInt(form.querySelector('input[name="form-rating"]:checked').value) : 0,
+          review:      status === 'finished' ? document.getElementById('book-review').value : '',
+        };
+
+        booksList.push(newBook);
+        await saveBooks();
+        renderAll();
+
+        form.reset();
+        customGroup.classList.add('hidden');
+        finishedFields.classList.add('hidden');
+        closeModal('add-book-modal');
+      });
+    }
+
+    // ── Backup / Restore ────────────────────────────────────────────────────────
+    function setupBackupRestore() {
+      document.getElementById('btn-export-log').addEventListener('click', () => {
+        window.location.href = '/api/backup';
+      });
+
+      const importBtn   = document.getElementById('btn-import-trigger');
+      const fileInput   = document.getElementById('file-import');
+
+      importBtn.addEventListener('click', () => fileInput.click());
+
+      fileInput.addEventListener('change', async e => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const text = await file.text();
+        try {
+          const data = JSON.parse(text);
+          const res  = await fetch('/api/restore', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(data),
+          });
+          if (!res.ok) throw new Error('Server error');
+          await fetchBooks();
+          alert('Reading log restored successfully!');
+        } catch {
+          alert('Error: Invalid backup file.');
+        }
+        fileInput.value = '';
+      });
+    }
+
+    // ── Kid tabs ────────────────────────────────────────────────────────────────
+    function setupKidTabs() {
+      document.querySelectorAll('.kid-tab').forEach(tab => {
+        tab.addEventListener('click', async () => {
+          document.querySelectorAll('.kid-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          currentKid = tab.dataset.kid;
+          await fetchBooks();
+        });
+      });
+    }
+
+    // ── Starfield ───────────────────────────────────────────────────────────────
+    const canvas = document.getElementById('starfield-canvas');
+    const ctx    = canvas.getContext('2d');
+    let stars    = [];
+
+    function initStars() {
+      stars = [];
+      const count = Math.floor((canvas.width * canvas.height) / 7500);
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          r: Math.random() * 1.5,
+          alpha: Math.random(),
+          speed: 0.004 + Math.random() * 0.012,
+          dir: Math.random() > 0.5 ? 1 : -1,
+        });
+      }
+    }
+
+    function animateStars() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const g = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 10, canvas.width/2, canvas.height/2, Math.max(canvas.width, canvas.height));
+      g.addColorStop(0, '#0c0f24');
+      g.addColorStop(1, '#070913');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      for (const s of stars) {
+        s.alpha += s.speed * s.dir;
+        if (s.alpha >= 1) { s.alpha = 1; s.dir = -1; }
+        else if (s.alpha <= 0.1) { s.alpha = 0.1; s.dir = 1; }
+        ctx.fillStyle = `rgba(255,255,255,${s.alpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      requestAnimationFrame(animateStars);
+    }
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initStars();
+    }
+
+    // ── Init ────────────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+      animateStars();
+
+      setupKidTabs();
+      setupAddBookForm();
+      setupBackupRestore();
+
+      document.getElementById('btn-add-book').addEventListener('click', () => openModal('add-book-modal'));
+
+      document.querySelectorAll('.close-modal-btn').forEach(btn =>
+        btn.addEventListener('click', e => closeModal(e.currentTarget.dataset.modal)));
+
+      await fetchBooks();
+    });
+  </script>
+</body>
+</html>
