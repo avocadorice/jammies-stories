@@ -33,6 +33,7 @@ type Book struct {
 	Rating      int              `json:"rating,omitempty"`
 	Review      string           `json:"review,omitempty"`
 	Sessions    []ReadingSession `json:"sessions,omitempty"`
+	WordsPerPage int              `json:"wordsPerPage,omitempty"`
 }
 
 type AppData struct {

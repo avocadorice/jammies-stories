@@ -107,6 +107,16 @@ def handle_log(args):
             print("Use --create-if-missing to add it, or provide --author and --total-pages.", file=sys.stderr)
             sys.exit(1)
         
+        # Determine wordsPerPage default
+        words_per_page = args.words_per_page
+        if words_per_page is None:
+            if args.total_pages < 50:
+                words_per_page = 25
+            elif args.total_pages < 150:
+                words_per_page = 100
+            else:
+                words_per_page = 200
+
         # Create new book
         book_id = f"book-{int(datetime.now().timestamp() * 1000)}"
         book = {
@@ -118,10 +128,14 @@ def handle_log(args):
             "cover": args.cover or "/static/assets/team_unicorn.jpg",
             "status": "reading",
             "startDate": date,
-            "sessions": []
+            "sessions": [],
+            "wordsPerPage": words_per_page
         }
         books.append(book)
         print(f"Created new book entry: '{book['title']}' by {book['author']}")
+    else:
+        if args.words_per_page is not None:
+            book["wordsPerPage"] = args.words_per_page
         
     # Update book session
     if "sessions" not in book or book["sessions"] is None:
@@ -171,6 +185,15 @@ def handle_add(args):
     date = datetime.now().strftime("%Y-%m-%d")
     book_id = f"book-{int(datetime.now().timestamp() * 1000)}"
     
+    words_per_page = args.words_per_page
+    if words_per_page is None:
+        if args.total_pages < 50:
+            words_per_page = 25
+        elif args.total_pages < 150:
+            words_per_page = 100
+        else:
+            words_per_page = 200
+
     book = {
         "id": book_id,
         "title": args.book,
@@ -180,7 +203,8 @@ def handle_add(args):
         "cover": args.cover or "/static/assets/team_unicorn.jpg",
         "status": args.status,
         "startDate": date,
-        "sessions": []
+        "sessions": [],
+        "wordsPerPage": words_per_page
     }
     
     if args.status == "finished":
@@ -221,15 +245,19 @@ def handle_list(args):
         tot = b.get("totalPages", 1)
         pct = int((curr / tot) * 100)
         bar = make_progress_bar(curr, tot)
+        wpp = b.get("wordsPerPage", 25)
+        words = curr * wpp
         print(f"📖 {b['title']} (by {b.get('author', 'Unknown')})")
-        print(f"   [{bar}] {pct}% | Page {curr}/{tot} | Time: {mins} mins")
+        print(f"   [{bar}] {pct}% | Page {curr}/{tot} | ~{words:,} words | Time: {mins} mins")
         
     print(f"\n--- Finished ({len(finished)}) ---")
     for b in finished:
         mins = sum(s.get("minutes", 0) for s in b.get("sessions", []))
         bar = "⭐" * 10
+        wpp = b.get("wordsPerPage", 25)
+        words = b.get("totalPages", 0) * wpp
         print(f"✅ {b['title']} (by {b.get('author', 'Unknown')})")
-        print(f"   [{bar}] 100% | Finished: {b.get('finishDate')} | Time: {mins} mins")
+        print(f"   [{bar}] 100% | ~{words:,} words | Finished: {b.get('finishDate')} | Time: {mins} mins")
 
 def main():
     parser = argparse.ArgumentParser(description="CLI tool for Jammy's Book Tracker")
@@ -242,6 +270,7 @@ def main():
     log_parser.add_argument("-m", "--minutes", type=int, required=True, help="Minutes spent reading")
     log_parser.add_argument("-p", "--page", type=int, default=None, help="Current page after session")
     log_parser.add_argument("--percentage", type=float, default=None, help="Update page progress to this percentage of total pages (0-100)")
+    log_parser.add_argument("-w", "--words-per-page", type=int, default=None, help="Words per page for the book")
     log_parser.add_argument("-d", "--date", default=None, help="Date of session (YYYY-MM-DD), default is today")
     log_parser.add_argument("--create-if-missing", action="store_true", help="Add book if it doesn't exist")
     log_parser.add_argument("--author", default="Unknown Author", help="Author of the book (only used if creating)")
@@ -257,6 +286,7 @@ def main():
     add_parser.add_argument("-b", "--book", required=True, help="Book title")
     add_parser.add_argument("--author", default="Unknown Author", help="Author of the book")
     add_parser.add_argument("--total-pages", type=int, required=True, help="Total pages of the book")
+    add_parser.add_argument("-w", "--words-per-page", type=int, default=None, help="Words per page for the book")
     add_parser.add_argument("--cover", default=None, help="Cover image path/URL")
     add_parser.add_argument("--status", default="reading", choices=["reading", "finished"], help="Initial status")
     
