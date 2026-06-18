@@ -1,4 +1,4 @@
-app = "jammies-stories"
+app = "jammystories"
 primary_region = "lax"
 
 [build]
