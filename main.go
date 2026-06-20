@@ -21,19 +21,20 @@ type ReadingSession struct {
 }
 
 type Book struct {
-	ID          string           `json:"id"`
-	Title       string           `json:"title"`
-	Author      string           `json:"author"`
-	TotalPages  int              `json:"totalPages"`
-	CurrentPage int              `json:"currentPage"`
-	Cover       string           `json:"cover"`
-	Status      string           `json:"status"`
-	StartDate   string           `json:"startDate"`
-	FinishDate  string           `json:"finishDate,omitempty"`
-	Rating      int              `json:"rating,omitempty"`
-	Review      string           `json:"review,omitempty"`
-	Sessions    []ReadingSession `json:"sessions,omitempty"`
+	ID           string           `json:"id"`
+	Title        string           `json:"title"`
+	Author       string           `json:"author"`
+	TotalPages   int              `json:"totalPages"`
+	CurrentPage  int              `json:"currentPage"`
+	Cover        string           `json:"cover"`
+	Status       string           `json:"status"`
+	StartDate    string           `json:"startDate"`
+	FinishDate   string           `json:"finishDate,omitempty"`
+	Rating       int              `json:"rating,omitempty"`
+	Review       string           `json:"review,omitempty"`
+	Sessions     []ReadingSession `json:"sessions,omitempty"`
 	WordsPerPage int              `json:"wordsPerPage,omitempty"`
+	TimesRead    int              `json:"timesRead,omitempty"`
 }
 
 type AppData struct {
@@ -90,6 +91,23 @@ func loadData() {
 	if err := json.Unmarshal(b, &appData); err != nil {
 		log.Printf("Warning: could not parse data file, resetting to defaults: %v", err)
 		appData = defaultAppData()
+		return
+	}
+	// Backfill: a finished book has been read at least once.
+	migrated := false
+	for kid, books := range appData.Kids {
+		for i := range books {
+			if books[i].Status == "finished" && books[i].TimesRead == 0 {
+				books[i].TimesRead = 1
+				migrated = true
+			}
+		}
+		appData.Kids[kid] = books
+	}
+	if migrated {
+		if err := saveDataLocked(); err != nil {
+			log.Printf("Warning: could not save migrated data: %v", err)
+		}
 	}
 }
 

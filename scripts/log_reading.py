@@ -159,13 +159,19 @@ def handle_log(args):
         print(f"Estimated page progress: updated page from {prev_page} to {book['currentPage']} of {book['totalPages']} (based on +1 page/minute)")
 
     # Mark as finished if requested or if progress is complete
+    was_finished = book.get("status") == "finished"
     if args.finish or book["currentPage"] >= book["totalPages"]:
         book["status"] = "finished"
         book["currentPage"] = book["totalPages"]
         book["finishDate"] = date
         book["rating"] = args.rating
         book["review"] = args.review or "Logged via CLI"
-        print(f"Book '{book['title']}' completed! Marked as finished.")
+        if not was_finished:
+            # First time reaching the end counts as one read.
+            book["timesRead"] = book.get("timesRead", 0) + 1
+        print(f"Book '{book['title']}' completed! Marked as finished (read {book.get('timesRead', 1)}x).")
+        if was_finished:
+            print("  (Already finished — use the 'reread' command to count a re-read.)")
     else:
         book["status"] = "reading"
         
@@ -212,10 +218,44 @@ def handle_add(args):
         book["finishDate"] = date
         book["rating"] = 3
         book["review"] = "Added via CLI"
+        book["timesRead"] = 1
         
     books.append(book)
     if save_books(args.kid, books):
         print(f"Successfully added '{book['title']}' to {args.kid}'s list!")
+    else:
+        print("Error: Failed to save changes.", file=sys.stderr)
+        sys.exit(1)
+
+def handle_reread(args):
+    books = get_books(args.kid)
+    book = find_book(books, args.book)
+    if not book:
+        print(f"Error: Book '{args.book}' not found in {args.kid}'s list.", file=sys.stderr)
+        print("Log it with the 'log' command first before counting a re-read.", file=sys.stderr)
+        sys.exit(1)
+
+    date = args.date or datetime.now().strftime("%Y-%m-%d")
+
+    # A book already marked finished has been read at least once, even if the
+    # count predates this field.
+    already_finished = book.get("status") == "finished"
+    prev = book.get("timesRead", 0)
+    if prev == 0 and already_finished:
+        prev = 1
+    book["timesRead"] = prev + 1
+
+    if "sessions" not in book or book["sessions"] is None:
+        book["sessions"] = []
+    book["sessions"].append({"date": date, "minutes": args.minutes})
+
+    # A re-read implies the whole book was read again.
+    book["status"] = "finished"
+    book["currentPage"] = book["totalPages"]
+    book["finishDate"] = date
+
+    if save_books(args.kid, books):
+        print(f"Logged a re-read of '{book['title']}' for {args.kid} — now read {book['timesRead']}x!")
     else:
         print("Error: Failed to save changes.", file=sys.stderr)
         sys.exit(1)
@@ -256,8 +296,10 @@ def handle_list(args):
         bar = "⭐" * 10
         wpp = b.get("wordsPerPage", 25)
         words = b.get("totalPages", 0) * wpp
+        times = b.get("timesRead", 1) or 1
+        reread = f" | Read {times}x" if times > 1 else ""
         print(f"✅ {b['title']} (by {b.get('author', 'Unknown')})")
-        print(f"   [{bar}] 100% | ~{words:,} words | Finished: {b.get('finishDate')} | Time: {mins} mins")
+        print(f"   [{bar}] 100% | ~{words:,} words | Finished: {b.get('finishDate')} | Time: {mins} mins{reread}")
 
 def main():
     parser = argparse.ArgumentParser(description="CLI tool for Jammy's Book Tracker")
@@ -290,16 +332,25 @@ def main():
     add_parser.add_argument("--cover", default=None, help="Cover image path/URL")
     add_parser.add_argument("--status", default="reading", choices=["reading", "finished"], help="Initial status")
     
+    # Reread subcommand
+    reread_parser = subparsers.add_parser("reread", help="Count a re-read of a book already in the log")
+    reread_parser.add_argument("-k", "--kid", required=True, choices=["Preston", "Blaire"], help="Kid's name")
+    reread_parser.add_argument("-b", "--book", required=True, help="Book title")
+    reread_parser.add_argument("-m", "--minutes", type=int, default=0, help="Minutes spent on this re-read")
+    reread_parser.add_argument("-d", "--date", default=None, help="Date of the re-read (YYYY-MM-DD), default is today")
+
     # List subcommand
     list_parser = subparsers.add_parser("list", help="List books in a kid's log")
     list_parser.add_argument("-k", "--kid", required=True, choices=["Preston", "Blaire"], help="Kid's name")
-    
+
     args = parser.parse_args()
-    
+
     if args.command == "log":
         handle_log(args)
     elif args.command == "add":
         handle_add(args)
+    elif args.command == "reread":
+        handle_reread(args)
     elif args.command == "list":
         handle_list(args)
 

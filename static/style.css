@@ -359,14 +359,18 @@ body {
 .history-book-title-meta { display: flex; flex-direction: column; }
 .history-book-title-meta strong { color: #fff; font-family: var(--font-headings); font-size: 1rem; }
 .history-book-title-meta span  { font-size: 0.75rem; color: var(--text-muted); }
+.reread-badge { margin-top: 0.3rem; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; font-weight: 700; color: var(--accent-teal); background: rgba(129, 236, 236, 0.15); padding: 0.15rem 0.5rem; border-radius: 999px; }
 
 .history-age { color: var(--accent-purple); font-weight: 700; }
 .history-rating { display: flex; flex-direction: column; gap: 0.2rem; }
 .stars-display { color: var(--accent-gold); }
 .review-quote { font-size: 0.8rem; font-style: italic; color: var(--text-muted); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+.history-actions { display: flex; align-items: center; gap: 0.25rem; }
 .btn-delete-log { background: transparent; border: none; color: var(--accent-coral); cursor: pointer; font-size: 1rem; padding: 0.4rem; border-radius: 8px; transition: var(--transition-fast); }
 .btn-delete-log:hover { background: rgba(255,118,117,0.15); }
+.btn-reread-log { background: transparent; border: none; color: var(--accent-teal); cursor: pointer; font-size: 1rem; padding: 0.4rem; border-radius: 8px; transition: var(--transition-fast); }
+.btn-reread-log:hover { background: rgba(129,236,236,0.15); }
 
 /* ── Empty State ────────────────────────────────────────────────────────── */
 .empty-history { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1.5rem; color: var(--text-muted); text-align: center; gap: 0.75rem; }

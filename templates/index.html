@@ -453,12 +453,16 @@
         if (book.sessions) {
           book.sessions.forEach(s => { bookMinutes += s.minutes || 0; });
         }
+        const times = book.timesRead || 1;
+        const rereadBadge = times > 1
+          ? `<span class="reread-badge" title="Preston has read this ${times} times"><i class="fa-solid fa-rotate-right"></i> Read ${times}×</span>`
+          : '';
         const row = document.createElement('div');
         row.className = 'history-row';
         row.innerHTML = `
           <div class="history-book-info">
             <img src="${book.cover}" alt="${book.title}" class="history-book-cover">
-            <div class="history-book-title-meta"><strong>${book.title}</strong><span>by ${book.author || 'Unknown'}</span></div>
+            <div class="history-book-title-meta"><strong>${book.title}</strong><span>by ${book.author || 'Unknown'}</span>${rereadBadge}</div>
           </div>
           <span>${book.totalPages} pages${bookMinutes ? ` (${bookMinutes}m)` : ''}</span>
           <span>${formatDate(book.finishDate)}</span>
@@ -467,9 +471,23 @@
             <span class="stars-display">${stars}</span>
             <span class="review-quote" title="${book.review || ''}">${book.review ? `"${book.review}"` : 'No review'}</span>
           </div>
-          <button class="btn-delete-log" data-id="${book.id}" title="Delete"><i class="fa-solid fa-trash-can"></i></button>`;
+          <div class="history-actions">
+            <button class="btn-reread-log" data-id="${book.id}" title="Read again"><i class="fa-solid fa-rotate-right"></i></button>
+            <button class="btn-delete-log" data-id="${book.id}" title="Delete"><i class="fa-solid fa-trash-can"></i></button>
+          </div>`;
         body.appendChild(row);
       });
+
+      body.querySelectorAll('.btn-reread-log').forEach(btn =>
+        btn.addEventListener('click', async e => {
+          const id   = e.currentTarget.dataset.id;
+          const book = booksList.find(b => b.id === id);
+          if (!book) return;
+          book.timesRead   = (book.timesRead || 1) + 1;
+          book.finishDate  = new Date().toISOString().slice(0, 10);
+          await saveBooks();
+          renderAll();
+        }));
 
       body.querySelectorAll('.btn-delete-log').forEach(btn =>
         btn.addEventListener('click', async e => {
@@ -552,11 +570,13 @@
 
       const book = booksList.find(b => b.id === id);
       if (!book) return;
+      const wasFinished = book.status === 'finished';
       book.status      = 'finished';
       book.currentPage = book.totalPages;
       book.finishDate  = finishDate;
       book.rating      = rating;
       book.review      = review;
+      if (!wasFinished) book.timesRead = (book.timesRead || 0) + 1;
 
       await saveBooks();
       renderAll();
@@ -594,6 +614,7 @@
           rating:      status === 'finished' ? parseInt(form.querySelector('input[name="form-rating"]:checked').value) : 0,
           review:      status === 'finished' ? document.getElementById('book-review').value : '',
           wordsPerPage: parseInt(document.getElementById('book-words-per-page').value) || 25,
+          timesRead:   status === 'finished' ? 1 : 0,
         };
 
         booksList.push(newBook);
